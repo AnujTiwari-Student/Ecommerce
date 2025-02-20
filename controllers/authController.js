@@ -10,21 +10,17 @@ module.exports.registerUser = async function(req , res){
     try{
         let {email , username , password} = req.body;
 
-        if (!username || !email || !password) {
-            return res.status(400).json({
-                error: 'Username, email, and password are required!'
-            });
-        }
-
         let newUser = await userModel.findOne({email})
         if(newUser){
-            return res.status(400).send(`Already have an account , please login`)
+            req.flash("error" , "Already have an account , please login")
+            return res.redirect('/')
         }
 
         bcrypt.genSalt(10, function(err , salt){
             bcrypt.hash(password , salt , async function(err , hash){
                 if(err){
-                    return console.log(`Something went wrong during hashing`);
+                    req.flash("error" , "Something went wrong")
+                    return res.redirect('/')
                 }
                 let user = await userModel.create({
                     username,
@@ -35,7 +31,7 @@ module.exports.registerUser = async function(req , res){
                 let token = generateToken(user)
                 res.cookie("token" , token)
                 console.log(`Token generated: ${token}`);
-                res.status(201).send(user)
+                res.status(201).redirect("/shop")
             })
         })
     } catch (error){
@@ -49,15 +45,10 @@ module.exports.loginUser = async function(req , res){
     try{
         let {email , password} = req.body;
 
-        if(!email , !password){
-            return res.status(400).json({
-                error: 'Email, and password are required!'
-            });
-        }
-
         let existingUser = await userModel.findOne({email})
         if(!existingUser){
-            return res.status(500).send('No account exist , please register')
+            req.flash("error" , "Email or Password is Incorrect")
+            return res.redirect('/')
         }
 
         bcrypt.compare(password , existingUser.password , function(err , result){
@@ -67,9 +58,10 @@ module.exports.loginUser = async function(req , res){
             if(result){
                 let token  = generateToken(existingUser)
                 res.cookie('token' , token)
-                res.status(200).send(existingUser)
+                res.status(200).redirect("/shop")
             }else{
-                res.send('Password Wrong')
+                req.flash("error" , "Email or Password is Incorrect")
+                return res.redirect('/')
             }
         })
     }
@@ -77,4 +69,9 @@ module.exports.loginUser = async function(req , res){
         console.error(error)
         res.status(500).send(`Internal Sever Error`)
     }
+}
+
+module.exports.logoutUser = async function(req , res){
+    res.cookie("token" , "")
+    res.redirect('/')
 }

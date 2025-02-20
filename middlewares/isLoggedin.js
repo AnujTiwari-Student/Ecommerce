@@ -10,11 +10,16 @@ module.exports = async function(req , res , next){
     try{
         let decoded = jwt.verify(req.cookies.token , process.env.SECRET_KEY);
         let user = userModel.findOne({email: decoded.email}).select("-password")
-        req.user(user)
+        if (!user) {
+            req.flash("error", "User not found. Please log in again.");
+            return res.redirect("/");
+        }
+        req.user = user
         next();
     }
     catch(error){
-        req.flash("error" , "something went wrong");
-        req.redirect("/")
+        console.error("Error verifying token:", error.message);
+        req.flash("error", "Invalid or expired token. Please log in again.");
+        return res.redirect("/");
     }
 }
