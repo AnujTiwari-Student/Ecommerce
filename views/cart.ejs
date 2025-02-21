@@ -1,46 +1,84 @@
 <%- include('./partials/header') %>
-    <div class="w-full h-screen flex items-start px-20 py-20 gap-10">
-        <div class="w-[30%] rounded-md overflow-hidden">
-            <div class="w-full h-80 bg-yellow-500"></div>
-            <div class="w-full flex justify-between px-5 py-4">
-                <h3 class="text-2xl">Clinge Bag</h3>
-                <div class="flex items-center gap-2">
-                    <i class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-add-line"></i>
-                    <div class="px-2 py-1 rounded-md bg-white text-black">01</div>
-                    <i class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-subtract-line"></i>
-                </div>
+<div class="w-full h-screen flex items-start px-20 py-20 gap-10">
+    <!-- Left Section: Cart Items -->
+    <div class="w-[70%] rounded-md overflow-hidden">
+        <% if (user.cart && user.cart.length > 0) { %>
+            <% user.cart.forEach((item) => { %>
+                <% if (item.product) { %>
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-300">
+                        <!-- Product Image -->
+                        <div class="w-20 h-20 bg-[<%= item.product.bgcolor %>]">
+                            <img class="h-20 w-16" src="data:image/jpeg;base64 , <%= item.product.image.toString('base64') %>" alt="">
+                        </div>
+
+                        <!-- Product Details -->
+                        <div class="flex-grow ml-5">
+                            <h3 class="text-xl font-semibold"><%= item.product.name %></h3>
+                            <p class="text-sm text-gray-600">Price: ₹ <%= item.product.price %></p>
+                        </div>
+
+                        <!-- Quantity Controls -->
+                        <div class="flex items-center gap-1 mr-5">
+                            <i class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-subtract-line cursor-pointer"
+                               onclick="updateQuantity('<%= item.product._id %>', 'decrement')"></i>
+                            <div class="px-2 py-1 rounded-md bg-white text-black"><%= item.quantity %></div>
+                            <i class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-add-line cursor-pointer"
+                               onclick="updateQuantity('<%= item.product._id %>', 'increment')"></i>
+                        </div>
+
+                        <!-- Individual Product Total MRP -->
+                        <div class="text-lg font-semibold">
+                            ₹ <%= item.product.price * item.quantity %>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <p class="text-red-500">Product not found.</p>
+                <% } %>
+            <% }); %>
+
+            <!-- Overall Total MRP -->
+            <div class="px-5 py-4 mt-5 bg-gray-100 rounded-md">
+                <h4 class="text-lg font-semibold">Overall Total MRP:</h4>
+                <h3 class="text-xl font-bold text-green-600">₹ <%= totalMRP %></h3>
             </div>
-            <div class="flex items-center justify-between px-5 py-3">
-                <h4 class="text-lg">Net Total</h4>
-                <h2 class="text-lg">₹ 1200</h2>
-            </div>
-        </div>
-        <div class="w-[70%]">
-            <h3 class="text-xl">Price Breakdown</h3>
-            <div class="px-10 mt-5">
-                <div class="flex mt-2">
-                    <h4 class="w-1/3">Total MRP</h4>
-                    <h4>₹ 1920</h4>
-                </div>
-                <div class="flex mt-2">
-                    <h4 class="w-1/3">Discount on MRP</h4>
-                    <h4>₹ 0</h4>
-                </div>
-                <div class="flex mt-2">
-                    <h4 class="w-1/3">Platform Fee</h4>
-                    <h4>₹ 20</h4>
-                </div>
-                <div class="flex mt-2">
-                    <h4 class="w-1/3">Shipping Fee</h4>
-                    <h4>FREE</h4>
-                </div>
-            </div>
-            <div class="w-full h-[1px] bg-black mt-10"></div>
-            <div class="flex mt-5">
-                <h3 class="w-1/3 text-xl">Total Amount</h3>
-                <h3 class="font-semibold text-xl text-green-600">₹ 1940</h3>
-            </div>
-            <form action=""></form>
-        </div>
+        <% } else { %>
+            <p class="text-center text-gray-600">Your cart is empty.</p>
+        <% } %>
     </div>
-    <%- include('./partials/footer') %>
+
+    <!-- Right Section: Price Breakdown -->
+    <div class="w-[30%]">
+        <h3 class="text-xl">Price Breakdown</h3>
+        <div class="px-10 mt-5">
+            <div class="flex mt-2">
+                <h4 class="w-1/3">Total MRP</h4>
+                <h4>₹ <%= totalMRP %></h4>
+            </div>
+            <div class="flex mt-2">
+                <h4 class="w-1/3">Discount on MRP</h4>
+                <h4>- ₹ <%= totalDiscount %></h4>
+            </div>
+            <div class="flex mt-2">
+                <h4 class="w-1/3">Platform Fee</h4>
+                <h4>₹ <%= platformFee %></h4>
+            </div>
+            <div class="flex mt-2">
+                <h4 class="w-1/3">Shipping Fee</h4>
+                <h4><%= shippingFee === 0 ? 'FREE' : `₹ ${shippingFee}` %></h4>
+            </div>
+        </div>
+        <div class="w-full h-[1px] bg-black mt-10"></div>
+        <div class="flex mt-5">
+            <h3 class="w-1/3 text-xl">Total Amount</h3>
+            <h3 class="font-semibold text-xl text-green-600">
+                ₹ <%= totalAmount %>
+            </h3>
+        </div>
+        <form action="/checkout" method="POST">
+            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-md mt-5">
+                Proceed to Checkout
+            </button>
+        </form>
+    </div>
+</div>
+<%- include('./partials/footer') %>

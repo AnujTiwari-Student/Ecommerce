@@ -17,17 +17,19 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6,
     },
-    cart: {
-        type: [{
-            productId: mongoose.Schema.Types.ObjectId,
-            quantity: {
-                type: Number,
-                required: true,
-                min: 1
-            }
-        }],
-        default: [],
-    },
+    cart: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'product', 
+            required: true,
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            min: 1, 
+            default: 1,
+        },
+    }],
     orders: {
         type: [{
             orderId: mongoose.Schema.Types.ObjectId,
